@@ -2,6 +2,7 @@ import SideBar from './components/SideBar';
 import { useEffect, useState } from "react";
 import axios from 'axios'; 
 import Task from './components/Task';
+import EditModal from './components/EditModal';
 
 function App() {
   const [tarefas, setTarefas] = useState([]);
@@ -9,6 +10,7 @@ function App() {
   const [categoria, setCategoria] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
   const [tarefaEditando, setTarefaEditando] = useState(null);
+  const [textMessageForm, setTextMessageError] = useState(null);
 
   useEffect(() => {
     axios.get('http://localhost:3001/tarefas')
@@ -16,6 +18,11 @@ function App() {
   }, []);
 
   const adicionarTarefa = () => {
+    if (!novaTarefa.trim() || !categoria){
+      setTextMessageError(true);
+      return;
+    } 
+      
     axios.post('http://localhost:3001/tarefas', {
       titulo: novaTarefa,
       categoria: categoria,
@@ -23,9 +30,9 @@ function App() {
     }).then(res => {
       setTarefas([...tarefas, res.data]);
       setNovaTarefa('');
+      setTextMessageError(null);
     });
   };
-
 
   const abrirModalEdicao = (tarefa) =>{
     setTarefaEditando(tarefa);
@@ -33,6 +40,7 @@ function App() {
     setCategoria(tarefa.categoria);
     setModalAberto(true);
   };
+
 
   const fecharModal = () => {
     setModalAberto(false);
@@ -53,7 +61,15 @@ function App() {
     })
   }
 
+  const editStatus = (tarefa) => {
+    const novaTarefa = { ...tarefa, feita: !tarefa.feita };
 
+    axios.put(`http://localhost:3001/tarefas/${tarefa.id}`, novaTarefa)
+      .then(res => {
+        const tarefasAtualizadas = tarefas.map(t => t.id === tarefa.id ? res.data : t);
+        setTarefas(tarefasAtualizadas);
+      });
+};
 
   const excluirTarefa = (id) =>{
     axios.delete(`http://localhost:3001/tarefas/${id}`)
@@ -79,41 +95,30 @@ function App() {
             value={categoria}
             onChange={e => setCategoria(e.target.value)}
             >
+            <option value="" disabled>Categoria</option>
             <option value="Trabalho">Trabalho</option>
-            <option value="" disabled hidden>Categoria</option>
             <option value="Estudos">Estudos</option>
             <option value="Pessoal">Pessoal</option>
           </select>
           <button onClick={adicionarTarefa}>Adicionar</button>
+          {textMessageForm && <p>Preencha todos os campos da tarefa para continuar</p>}
         </div>
         <ul>
           {tarefas.map((t, i) => (
-            <Task key={i} tarefa={t} onExcluir={excluirTarefa} onEditar={abrirModalEdicao}/>
+            <Task key={i} tarefa={t} onExcluir={excluirTarefa} onEditar={abrirModalEdicao} onEditStatus={editStatus}/>
           ))}
         </ul>
-        {modalAberto &&(
-          <div className= "edit__modal">
-          <p>Modal de edição</p>
-          <input
-            value={novaTarefa}
-            onChange={e => setNovaTarefa(e.target.value)}
-            placeholder="Nova tarefa"
-          />
-          <select
-            name="categoria"
-            id="categoria"
-            value={categoria}
-            onChange={e => setCategoria(e.target.value)}
-            >
-            <option value="Trabalho">Trabalho</option>
-            <option value="" disabled hidden>Categoria</option>
-            <option value="Estudos">Estudos</option>
-            <option value="Pessoal">Pessoal</option>
-          </select>
-          <button onClick={editarTarefa}>Confirmar</button>
-          <button onClick={fecharModal}>Cancelar</button>
-        </div>
-        )}
+        {modalAberto && (
+        <EditModal
+          tarefa={tarefaEditando}
+          novaTarefa={novaTarefa}
+          categoria={categoria}
+          onChangeTitulo={e => setNovaTarefa(e.target.value)}
+          onChangeCategoria={e => setCategoria(e.target.value)}
+          onConfirmar={editarTarefa}
+          onCancelar={fecharModal}
+        />
+      )}
         
       </div>
     </div>

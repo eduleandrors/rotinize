@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Tarefa = require('../models/tarefa');
+const Tarefa = require('./task');
 
 const StatusTarefa = sequelize.define('StatusTarefa', {
 
@@ -17,4 +17,4 @@ const StatusTarefa = sequelize.define('StatusTarefa', {
 StatusTarefa.belongsTo(Tarefa, {foreignKey: 'tarefaId'});
 Tarefa.hasMany(StatusTarefa, {foreignKey: 'tarefaId'});
 
-module.exports = Tarefa;
+module.exports = StatusTarefa;
