@@ -2,7 +2,7 @@
 
 function EditModal({ novaTarefa, categoria, onChangeTitulo, onChangeCategoria, onConfirmar, onCancelar }) {
   return (
-    <div className="edit__modal">
+    <div>
       <p>Modal de edição</p>
       <input value={novaTarefa} onChange={onChangeTitulo} />
       <select value={categoria} onChange={onChangeCategoria}>
