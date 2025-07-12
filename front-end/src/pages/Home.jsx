@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import axios from 'axios';
 import Task from '../components/Task';
-import EditModal from '../components/EditModal';
+import Modal from '../components/Modal'
 import HeaderForm from "../components/Header";
 import SideMobileBar from "../components/SideMobileBar";
-import CreateModal from "../components/CreateModal";
 import Overlay from "../components/Overlay";
 import Filters from "../components/Filters";
 import AddIcon from '@mui/icons-material/Add';
+import EmptyMessage from "../components/EmptyMessage";
+import ViewTask from "../components/ViewTask";
+
 export default function Home() {
   const [tarefas, setTarefas] = useState([]);
   const [novaTarefa, setNovaTarefa] = useState('');
@@ -15,16 +17,22 @@ export default function Home() {
   const [horario, setHorario] = useState('');
   const [important, setImportant] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [modalAberto, setModalAberto] = useState(false);
   const [tarefaEditando, setTarefaEditando] = useState(null);
   const [textMessageForm, setTextMessageForm] = useState(null);
   const [sideBarMobile, setSideBarMobile] = useState(false)
   const [openModalCreation, setOpenModalCreation] = useState(false);
-
+  const [filterActive, setFilterActive] = useState('all')
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingTask, setViewingTask] = useState(null);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     axios.get('http://localhost:3001/tarefas')
       .then(res => setTarefas(res.data));
+  }, []);
+
+  useEffect(() => {
+    listAllTasks();
   }, []);
 
   const listAllTasks = () => {
@@ -80,14 +88,21 @@ export default function Home() {
     setNovaTarefa(tarefa.titulo);
     setHorario(tarefa.horario)
     setCategoria(tarefa.categoria);
+    if(tarefa.important===true){
+    setImportant('Yes');
+    }else{
+      setImportant('No');
+    }
     setImportant(tarefa.important);
     setDescricao(tarefa.descricao);
-    setModalAberto(true);
+    setOpenModalCreation(true);
+    setShowViewModal(false);
+    setEditing(true);
   };
 
   const fecharModal = () => {
-    setModalAberto(false);
     setOpenModalCreation(false);
+    setShowViewModal(false);
     setNovaTarefa('');
     setCategoria('');
     setHorario('');
@@ -132,16 +147,13 @@ export default function Home() {
     setSideBarMobile(!sideBarMobile);
   }
 
+  const openViewModal = (tarefa) =>{
+    setViewingTask(tarefa);
+    setShowViewModal(true);
+  }
+
   return (
     <div className='w-full relative text-dark-200 dark:text-gray-100'>
-      
-      {tarefas.length === 0 && 
-        <div className="w-[100%] absolute flex flex-col flex-wrap items-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-rotinize-200 dark:text-rotinize-100"
-        >
-          <h2 className="text-3xl">You don't have any tasks yet!</h2>
-          <h3>Add one by clicking the button "+" below</h3>
-        </div>
-      }
       
       <SideMobileBar aberto={sideBarMobile} onOpenSideBarMobile={toggleSideBarMobile}/>
       {sideBarMobile && (
@@ -165,51 +177,49 @@ export default function Home() {
       />
       {openModalCreation &&
       <Overlay onClose={fecharModal}>
-      <CreateModal
-      novaTarefa={novaTarefa}
-      setNovaTarefa={setNovaTarefa}
-      horario={horario}
-      setHorario={setHorario}
-      categoria={categoria}
-      setCategoria={setCategoria}
-      important={important}
-      setImportant={setImportant}
-      descricao={descricao}
-      setDescricao={setDescricao}
-      textMessageForm={textMessageForm}
-      adicionarTarefa={adicionarTarefa}
-      onCancelar={fecharModal}
-      />
+        <Modal
+        novaTarefa={novaTarefa}
+        setNovaTarefa={setNovaTarefa}
+        horario={horario}
+        setHorario={setHorario}
+        categoria={categoria}
+        setCategoria={setCategoria}
+        important={important}
+        setImportant={setImportant}
+        descricao={descricao}
+        setDescricao={setDescricao}
+        textMessageForm={textMessageForm}
+        adicionarTarefa={adicionarTarefa}
+        onCancelar={fecharModal}
+        editarTarefa={editarTarefa}
+        editing={editing}
+        />
       </Overlay>
       }
+      
+      <Filters listAllTasks={listAllTasks} listDoneTasks={listDoneTasks} listPendingTasks={listPendingTasks} filterActive={filterActive} setFilterActive={setFilterActive}/>
+      
 
-      {tarefas.length > 0 &&
-        <Filters listAllTasks={listAllTasks} listDoneTasks={listDoneTasks} listPendingTasks={listPendingTasks}/>
-      }
+      {tarefas.length === 0 && (
+      <EmptyMessage filterActive={filterActive} />
+      )}
+
 
       <ul className="px-5 pb-8 flex flex-col gap-8">
         {tarefas.map((t, i) => (
-          <Task key={i} tarefa={t} onEditStatus={editStatus}/>
+          <Task key={i} tarefa={t} onEditStatus={editStatus} openViewModal={openViewModal}/>
         ))}
       </ul>
       
-      {modalAberto && (
-        <Overlay onClose={fecharModal}>
-        <EditModal
-          tarefa={tarefaEditando}
-          novaTarefa={novaTarefa}
-          categoria={categoria}
-          onChangeTitulo={e => setNovaTarefa(e.target.value)}
-          onChangeCategoria={e => setCategoria(e.target.value)}
-          onConfirmar={editarTarefa}
-          onCancelar={fecharModal}
-        />
-        </Overlay>
-      )}
+      {showViewModal && 
+      <Overlay onClose={fecharModal}> 
+        <ViewTask tarefa={viewingTask} onExcluir={excluirTarefa} onEditar={() => abrirModalEdicao(viewingTask)}/>
+      </Overlay>
+      }
 
       <button 
-        className="flex justify-center items-center h-[70px] w-[70px] rounded-full fixed bottom-6 right-6 bg-[#017680] text-white"
-        onClick={() => setOpenModalCreation(true)}>
+        className="z-50 flex justify-center items-center h-[70px] w-[70px] rounded-full fixed bottom-6 right-6 bg-rotinize-100 text-white"
+        onClick={() => {setOpenModalCreation(true); setEditing(false)}}>
           <AddIcon sx={{ fontSize: 40 }} />
       </button>
     </div>

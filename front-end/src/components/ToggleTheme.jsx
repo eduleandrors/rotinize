@@ -3,12 +3,12 @@ import { useEffect } from 'react';
 
 const ToggleTheme = () => {
 
-    // const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    // const pageClasses = document.documentElement.classList;
+    const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const pageClasses = document.documentElement.classList;
 
-    // useEffect(() =>{
-    //     systemPreference && pageClasses.add('dark');
-    // })
+    useEffect(() =>{
+        systemPreference && pageClasses.add('dark');
+    })
 
     const toggle = () => {
         document.documentElement.classList.toggle("dark");

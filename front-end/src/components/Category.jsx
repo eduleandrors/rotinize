@@ -17,7 +17,7 @@ const Category = ({ categoria }) => {
       setCor("rgba(255, 105, 180, 0.7)");
       setEmoji("👤");
     } else if (categoria === "Home") {
-      setCor("rgba(240, 230, 140, 0.7)");
+      setCor("rgba(196, 180, 0, 0.76)");
       setEmoji("🏠");
     } else {
       setCor("rgba(50, 205, 50, 0.7)");
@@ -27,11 +27,11 @@ const Category = ({ categoria }) => {
 
   return (
     <div
-      className="flex gap-1 py-1 px-[.4rem] bg-opacity-70 w-max rounded-md"
+      className="flex items-center border border-gray-500 border-opacity-50 gap-1 p-px px-[.4rem] bg-opacity-70 w-max rounded-md"
       style={{ backgroundColor: cor }}
     >
       <p>{emoji}</p>
-      <p style={{ textShadow: "3px 1px 5px black" }}>{categoria}</p>
+      <p  className="text-white text-sm" style={{ textShadow: "3px 1px 5px black" }} >{categoria}</p>
     </div>
   );
 };
